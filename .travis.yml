@@ -23,6 +23,7 @@ before_script:
 
 script:
   - python manage.py cov
+  - coveralls
 
 after_success:
-  coveralls
+  - "coveralls"
