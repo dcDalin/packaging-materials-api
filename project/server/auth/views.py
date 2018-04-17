@@ -6,8 +6,20 @@ from flask.views import MethodView
 
 from project.server import bcrypt, db
 from project.server.models import User, BlacklistToken
+from project.server.auth.schema import UserSchema
 
 auth_blueprint = Blueprint('auth', __name__)
+
+user_schema = UserSchema()
+users_schema = UserSchema(many=True)
+
+
+class ShowAll(MethodView):
+    def get(self):
+        users = User.query.all()
+        # Serialize the queryset
+        result = users_schema.dump(users)
+        return jsonify({'err': result})
 
 
 class RegisterAPI(MethodView):
@@ -55,6 +67,7 @@ class LoginAPI(MethodView):
     """
     User Login Resource
     """
+
     def post(self):
         # get the post data
         post_data = request.get_json()
@@ -93,6 +106,7 @@ class UserAPI(MethodView):
     """
     User Resource
     """
+
     def get(self):
         # get the auth token
         auth_header = request.headers.get('Authorization')
@@ -138,6 +152,7 @@ class LogoutAPI(MethodView):
     """
     Logout Resource
     """
+
     def post(self):
         # get auth token
         auth_header = request.headers.get('Authorization')
@@ -178,13 +193,20 @@ class LogoutAPI(MethodView):
             }
             return make_response(jsonify(responseObject)), 403
 
+
 # define the API resources
+view_all_view = ShowAll.as_view('show_all')
 registration_view = RegisterAPI.as_view('register_api')
 login_view = LoginAPI.as_view('login_api')
 user_view = UserAPI.as_view('user_api')
 logout_view = LogoutAPI.as_view('logout_api')
 
 # add Rules for API Endpoints
+auth_blueprint.add_url_rule(
+    '/auth/showall',
+    view_func=view_all_view,
+    methods=['GET']
+)
 auth_blueprint.add_url_rule(
     '/auth/register',
     view_func=registration_view,
